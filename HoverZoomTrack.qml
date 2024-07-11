@@ -6,6 +6,8 @@ Rectangle {
     color: "blue"
     radius: 10
     visible: false
+    opacity: 0.5
+
     RowLayout {
         anchors.fill: parent
         Layout.alignment: Qt.AlignCenter

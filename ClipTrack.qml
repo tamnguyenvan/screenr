@@ -7,7 +7,7 @@ Rectangle {
     implicitWidth: 100
     implicitHeight: 60
     radius: 10
-    color: "#614BF9"
+    color: "#B37606"
 
     signal positionChanged(real x)
     signal leftMouseClicked(real clickX)
@@ -15,13 +15,14 @@ Rectangle {
 
     property int resizeHandleWidth: 10
     property bool resizing: false
+    property real videoLen: 0
 
     Rectangle {
         width: parent.width - 20
         height: parent.height
         x: 10
         y: 0
-        color: "#4329F4"
+        color: "#865A0E"
 
         ColumnLayout {
             anchors.fill: parent
@@ -31,10 +32,10 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignHCenter
                 Image {
-                    source: "/home/tamnv/Projects/exp/screenr/resources/icons/cursor.svg"
+                    source: "/home/tamnv/Projects/exp/screenr/resources/icons/clip.svg"
                 }
                 Label {
-                    text: qsTr("Zoom")
+                    text: qsTr("Clip")
                 }
             }
 
@@ -44,24 +45,20 @@ Rectangle {
                 spacing: 10
 
                 RowLayout {
-                    spacing: 4
                     Image {
                         source: "/home/tamnv/Projects/exp/screenr/resources/icons/zoom.svg"
                     }
 
                     Label {
-                        text: qsTr("2x")
+                        text: videoLen.toFixed(1) + "s"
                     }
-                }
 
-                RowLayout {
-                    spacing: 4
                     Image {
-                        source: "/home/tamnv/Projects/exp/screenr/resources/icons/mouse.svg"
+                        source: "/home/tamnv/Projects/exp/screenr/resources/icons/clock.svg"
                     }
 
                     Label {
-                        text: qsTr("Auto")
+                        text: qsTr("1x")
                     }
                 }
             }
@@ -81,7 +78,7 @@ Rectangle {
         }
 
         onReleased: {
-            zoomTrack.positionChanged(clipTrack.x)
+            clipTrack.positionChanged(clipTrack.x)
         }
 
         onClicked: event => {

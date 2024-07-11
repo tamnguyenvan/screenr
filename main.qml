@@ -453,6 +453,7 @@ ApplicationWindow {
                             x: 0
                             y: 80
                             width: root.fps * root.pixelsPerFrame * root.videoLen
+                            videoLen: root.videoLen
 
                             onLeftMouseClicked: function (mouseX) {
                                 timeSlider.x = x + mouseX - timeSlider.width / 2
