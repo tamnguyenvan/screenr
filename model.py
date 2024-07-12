@@ -218,6 +218,14 @@ class VideoController(QObject):
     def border_radius(self, value):
         self.video_processor.border_radius = value
 
+    @Property(dict)
+    def background(self):
+        return self.video_processor.background
+
+    @background.setter
+    def background(self, value):
+        self.video_processor.background = value
+
     @Slot(str)
     def load_video(self, path):
         self.video_processor.load_video(path)
@@ -301,6 +309,7 @@ class VideoProcessor(QObject):
         self._padding = 100
         self._inset = 0
         self._border_radius = 30
+        self._background = {'type': 'wallpaper', 'value': 0}
         self.mouse_events = {
             'click': [],
             'move': []
@@ -324,6 +333,15 @@ class VideoProcessor(QObject):
     def border_radius(self, value):
         self._border_radius = value
         self.transforms['roundness'] = transforms.Roundness(radius=value)
+
+    @property
+    def background(self):
+        return self._background
+
+    @background.setter
+    def background(self, value):
+        self._background = value
+        self.transforms['background'] = transforms.Background(background=value)
 
     @property
     def is_playing(self):

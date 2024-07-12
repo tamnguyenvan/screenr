@@ -1,10 +1,13 @@
 {
     "files": [
         "ClipTrack.qml",
+        "ColorPage.qml",
         "CustomButton.qml",
         "HoverZoomTrack.qml",
+        "ImagePage.qml",
         "NonZoomTrackMouseArea.qml",
         "TimeSlider.qml",
+        "WallpaperPage.qml",
         "ZoomTrack.qml",
         "image_provider.py",
         "main.py",

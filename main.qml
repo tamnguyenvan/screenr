@@ -160,7 +160,7 @@ ApplicationWindow {
                                 anchors.rightMargin: 20
                                 anchors.topMargin: 30
                                 anchors.bottomMargin: 30
-                                spacing: 100
+                                spacing: 40
 
                                 // Background settings
                                 ColumnLayout {
@@ -201,11 +201,9 @@ ApplicationWindow {
                                     StackLayout {
                                         width: parent.width
                                         currentIndex: backgroundSettingsBar.currentIndex
-                                        Rectangle {
+
+                                        WallpaperPage {
                                             id: wallpaperPage
-                                            width: parent.width
-                                            height: 50
-                                            color: "red"
                                         }
 
                                         Rectangle {
@@ -215,18 +213,12 @@ ApplicationWindow {
                                             color: "red"
                                         }
 
-                                        Rectangle {
+                                        ColorPage {
                                             id: colorPage
-                                            width: parent.width
-                                            height: 50
-                                            color: "red"
                                         }
 
-                                        Rectangle {
+                                        ImagePage {
                                             id: imagePage
-                                            width: parent.width
-                                            height: 50
-                                            color: "red"
                                         }
                                     }
                                 }

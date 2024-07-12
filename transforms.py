@@ -1,3 +1,4 @@
+import os
 import re
 import platform
 from enum import Enum, auto
@@ -542,6 +543,15 @@ class Background(BaseTransform):
             hex_color = background['value']
             r, g, b = hex_to_rgb(hex_color)
             background_image = np.full(shape=(height, width, 3), fill_value=(b, g, r), dtype=np.uint8)
+        elif background['type'] == 'image':
+            background_path = background['value'].toLocalFile()
+            if not os.path.exists(background_path):
+                raise Exception()
+
+            background_image = cv2.imread(background_path)
+            background_image = cv2.resize(background_image, (width, height))
+        else:
+            raise Exception()
 
         return background_image
 
