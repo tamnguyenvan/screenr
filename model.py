@@ -13,12 +13,12 @@ import transforms
 
 
 class ZoomTrackItem(QObject):
-    def __init__(self, x, y, width, track_start, track_len):
+    def __init__(self, x, y, width, start_frame, track_len):
         super().__init__()
         self._x = x
         self._y = y
         self._width = width
-        self._track_start = track_start
+        self._start_frame = start_frame
         self._track_len = track_len
 
     @Property(int)
@@ -39,9 +39,17 @@ class ZoomTrackItem(QObject):
     def width(self):
         return self._width
 
+    @width.setter
+    def width(self, value):
+        self._width = value
+
     @Property(int)
-    def track_start(self):
-        return self._track_start
+    def start_frame(self):
+        return self._start_frame
+
+    @start_frame.setter
+    def start_frame(self, value):
+        self._start_frame = value
 
     @Property(int)
     def track_len(self):
@@ -52,14 +60,15 @@ class ZoomTrackModel(QAbstractListModel):
     XRole = Qt.UserRole + 1
     YRole = Qt.UserRole + 2
     WidthRole = Qt.UserRole + 3
-    TrackStartRole = Qt.UserRole + 4
+    StartFrameRole = Qt.UserRole + 4
     TrackLenRole = Qt.UserRole + 5
 
     zoomTracksChanged = Signal()
 
-    def __init__(self, zoom_tracks=None):
+    def __init__(self, zoom_tracks=None, maximum_x=0):
         super().__init__()
         self._zoom_tracks = zoom_tracks or []
+        self._maximum_x = maximum_x
 
     def data(self, index, role):
         if not index.isValid():
@@ -71,8 +80,8 @@ class ZoomTrackModel(QAbstractListModel):
             return zoom_track.y
         if role == ZoomTrackModel.WidthRole:
             return zoom_track.width
-        if role == ZoomTrackModel.TrackStartRole:
-            return zoom_track.track_start
+        if role == ZoomTrackModel.StartFrameRole:
+            return zoom_track.start_frame
         if role == ZoomTrackModel.TrackLenRole:
             return zoom_track.track_len
 
@@ -84,13 +93,13 @@ class ZoomTrackModel(QAbstractListModel):
         roles[ZoomTrackModel.XRole] = b'x'
         roles[ZoomTrackModel.YRole] = b'y'
         roles[ZoomTrackModel.WidthRole] = b'width'
-        roles[ZoomTrackModel.TrackStartRole] = b'track_start'
+        roles[ZoomTrackModel.StartFrameRole] = b'start_frame'
         roles[ZoomTrackModel.TrackLenRole] = b'track_len'
         return roles
 
-    @Slot(float, float)
-    def addZoomTrack(self, x, width):
-        new_track = ZoomTrackItem(x, 0, width, 0, 0)  # TODO:
+    @Slot(float, float, float, float)
+    def addZoomTrack(self, x, width, start_frame, track_len):
+        new_track = ZoomTrackItem(x, 0, width, start_frame, track_len)  # TODO:
 
         insert_index = bisect_left([track.x for track in self._zoom_tracks], x)
 
@@ -102,6 +111,13 @@ class ZoomTrackModel(QAbstractListModel):
         # for zoom_track in self._zoom_tracks:
         #     print(zoom_track.x, zoom_track.width)
         # print('*' * 20)
+
+    @Slot(list)
+    def setZoomTracks(self, zoom_tracks):
+        self.beginResetModel()
+        self._zoom_tracks = [ZoomTrackItem(track['x'], track['y'], track['width'], track['start_frame'], track['track_len']) for track in zoom_tracks]
+        self.endResetModel()
+        self.zoomTracksChanged.emit()
 
     @Slot(int)
     def deleteZoomTrack(self, index):
@@ -119,11 +135,12 @@ class ZoomTrackModel(QAbstractListModel):
             self.endRemoveRows()
             self.zoomTracksChanged.emit()
 
-    @Slot(int, int)
-    def updateX(self, index, new_x):
-        if 0 <= index < len(self._zoom_tracks) and new_x >= 0:
+    @Slot(int, int, int)
+    def updateX(self, index, new_x, new_start_frame):
+        if 0 <= index < len(self._zoom_tracks) and new_x >= 0 and new_start_frame >= 0:
             self._zoom_tracks[index].x = new_x
-            self.dataChanged.emit(self.index(index), self.index(index), [ZoomTrackModel.XRole])
+            self._zoom_tracks[index].start_frame = new_start_frame
+            self.dataChanged.emit(self.index(index), self.index(index), [ZoomTrackModel.XRole, ZoomTrackModel.StartFrameRole])
             self.zoomTracksChanged.emit()
 
     @Slot(int, float)
@@ -133,10 +150,9 @@ class ZoomTrackModel(QAbstractListModel):
             self.dataChanged.emit(self.index(index), self.index(index), [self.WidthRole])
             self.zoomTracksChanged.emit()
 
-    @Slot(result='QVariantList')
+    @Slot(result=list)
     def getGaps(self):
         gaps = []
-        total_width = 4000
         last_end = 0
 
         for track in sorted(self._zoom_tracks, key=lambda t: t.x):
@@ -144,9 +160,18 @@ class ZoomTrackModel(QAbstractListModel):
                 gaps.append({"x": last_end, "width": track.x - last_end})
             last_end = track.x + track.width
 
-        if last_end < total_width:
-            gaps.append({"x": last_end, "width": total_width - last_end})
+        if last_end < self.maximumX:
+            gaps.append({"x": last_end, "width": self.maximumX - last_end})
         return gaps
+
+    @Property(float)
+    def maximumX(self):
+        return self._maximum_x
+
+    @maximumX.setter
+    def maximumX(self, value):
+        self._maximum_x = value
+        self.zoomTracksChanged.emit()
 
 
 class VideoController(QObject):
@@ -154,18 +179,19 @@ class VideoController(QObject):
     playingChanged = Signal(bool)
     currentFrameChanged = Signal(int)
 
-    def __init__(self, frame_provider):
+    def __init__(self, zoomtrack_model, frame_provider):
         super().__init__()
         self.video_processor = VideoProcessor()
         self.video_thread = VideoThread(self.video_processor)
+        self.zoomtrack_model = zoomtrack_model
         self.frame_provider = frame_provider
 
         self.video_processor.frameProcessed.connect(self.on_frame_processed)
         self.video_processor.playingChanged.connect(self.on_playing_changed)
+        self.zoomtrack_model.zoomTracksChanged.connect(self.on_zoomtracks_changed)
 
     @Property(int)
     def fps(self):
-        print(self.video_processor.fps)
         return self.video_processor.fps
 
     @Property(int)
@@ -195,6 +221,7 @@ class VideoController(QObject):
     @Slot(str)
     def load_video(self, path):
         self.video_processor.load_video(path)
+        self.zoomtrack_model.setZoomTracks(self.video_processor.mouse_events['click'])
 
     @Slot()
     def toggle_play_pause(self):
@@ -202,6 +229,26 @@ class VideoController(QObject):
 
     def on_playing_changed(self, is_playing):
         self.playingChanged.emit(is_playing)
+
+    def on_zoomtracks_changed(self):
+        # update the underlying data
+        new_zoom_tracks = []
+        for i in range(self.zoomtrack_model.rowCount()):
+            index = self.zoomtrack_model.index(i, 0)
+            new_zoom_tracks.append({
+                'x': self.zoomtrack_model.data(index, ZoomTrackModel.XRole),
+                'y': self.zoomtrack_model.data(index, ZoomTrackModel.YRole),
+                'width': self.zoomtrack_model.data(index, ZoomTrackModel.WidthRole),
+                'start_frame': self.zoomtrack_model.data(index, ZoomTrackModel.StartFrameRole),
+                'track_len': self.zoomtrack_model.data(index, ZoomTrackModel.TrackLenRole)
+            })
+
+        self.video_processor.mouse_events['click'] = new_zoom_tracks
+
+        self.video_processor.transforms['zoom'] = transforms.Zoom(
+            click_data=new_zoom_tracks,
+            fps=self.video_processor.fps
+        )
 
     @Slot()
     def play(self):
@@ -221,6 +268,10 @@ class VideoController(QObject):
     @Slot()
     def prev_frame(self):
         self.video_processor.prev_frame()
+
+    @Slot(int)
+    def jump_to_frame(self, target_frame):
+        self.video_processor.jump_to_frame(target_frame)
 
     @Slot()
     def get_current_frame(self):
@@ -294,6 +345,12 @@ class VideoProcessor(QObject):
         self.video_len = self.total_frames / self.fps
         self.current_frame = 0
 
+        # Fake mouse events
+        self.mouse_events = {
+            'click': [{'x': 30, 'y': 0, 'width': 3 * self.fps * 6, 'start_frame': int(self.fps), 'track_len': 3}],
+            'move': []
+        }
+
         background = {'type': 'wallpaper', 'value': 1}
         self.transforms = transforms.Compose({
             'aspect_ratio': transforms.AspectRatio('Auto'),
@@ -359,14 +416,14 @@ class VideoProcessor(QObject):
                 self.frameProcessed.emit(processed_frame)
 
     @Slot(int)
-    def jump_to_frame(self, frame_index):
-        if self.video.isOpened() and 0 <= frame_index < self.total_frames:
-            self.video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
+    def jump_to_frame(self, target_frame):
+        if self.video.isOpened() and 0 <= target_frame < self.total_frames:
+            self.video.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
             ret, frame = self.video.read()
             if ret:
                 processed_frame = self.process_frame(frame)
+                self.current_frame = target_frame
                 self.frameProcessed.emit(processed_frame)
-                self.current_frame = frame_index
 
     @Slot()
     def get_current_frame(self):
@@ -393,7 +450,7 @@ class VideoProcessor(QObject):
                 self.pause()
 
     def process_frame(self, frame):
-        transformed_result = self.transforms(input=frame, frame_index=self.current_frame)
+        transformed_result = self.transforms(input=frame, start_frame=self.current_frame)
         output_frame = transformed_result['input']
 
         output_frame = cv2.cvtColor(output_frame, cv2.COLOR_BGR2RGB)

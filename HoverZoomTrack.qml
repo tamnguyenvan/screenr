@@ -10,9 +10,9 @@ Rectangle {
 
     RowLayout {
         anchors.fill: parent
-        Layout.alignment: Qt.AlignCenter
         Image {
             source: "/home/tamnv/Projects/exp/screenr/resources/icons/add.svg"
+            Layout.alignment: Qt.AlignCenter
         }
     }
 }

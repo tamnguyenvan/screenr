@@ -408,84 +408,131 @@ ApplicationWindow {
                 Flickable {
                     anchors.fill: parent
 
-                    contentWidth: 10000
+                    contentWidth: root.fps * root.videoLen * root.pixelsPerFrame + 200
                     contentHeight: parent.height
                     boundsMovement: Flickable.StopAtBounds
                     boundsBehavior: Flickable.DragOverBounds
-                    clip: true
 
+                    // Container
                     Item {
-                        width: videoEdit.width
+                        width: parent.contentWidth
                         height: videoEdit.height
+                        anchors.left: parent.left
+                        anchors.leftMargin: 20
 
                         // Timeline
                         Repeater {
                             model: Math.ceil(root.videoLen) + 1
 
-                            Item {
+                            Rectangle {
                                 width: root.fps * root.pixelsPerFrame
                                 height: 60
-                                ColumnLayout {
-                                    x: root.fps * root.pixelsPerFrame * index
-                                    y: 0
+                                x: root.fps * root.pixelsPerFrame * index
+                                y: 0
+                                color: "transparent"
 
-                                    Item {
-                                        Layout.fillHeight: true
-                                        Layout.fillWidth: true
-                                    }
+                                Item {
+                                    width: 20
+                                    height: parent.height
 
-                                    Label {
-                                        text: qsTr("" + index)
-                                    }
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        spacing: 10
 
-                                    Rectangle {
-                                        width: 4
-                                        height: 4
-                                        radius: 2
-                                        color: "darkgray"
+                                        Item {
+                                            Layout.fillHeight: true
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Label {
+                                            Layout.alignment: Qt.AlignCenter
+                                            text: qsTr("" + index)
+                                        }
+
+                                        Item {
+                                            Layout.alignment: Qt.AlignCenter
+
+                                            Rectangle {
+                                                width: 4
+                                                height: 4
+                                                radius: 2
+                                                color: "white"
+                                                anchors.centerIn: parent
+                                            }
+                                        }
+
+                                        Item {
+                                            Layout.fillHeight: true
+                                            Layout.fillWidth: true
+                                        }
                                     }
                                 }
                             }
                         }
 
                         // Clip track
-                        ClipTrack {
-                            x: 0
-                            y: 80
-                            width: root.fps * root.pixelsPerFrame * root.videoLen
-                            videoLen: root.videoLen
+                        Item {
+                            width: parent.width
+                            height: 60
+                            y: 75
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
 
-                            onLeftMouseClicked: function (mouseX) {
-                                timeSlider.x = x + mouseX - timeSlider.width / 2
-                                timeSlider.visible = true
-                                timeIndicator.visible = false
+                            ClipTrack {
+                                x: 0
+                                y: 0
+                                height: 60
+                                width: root.fps * root.pixelsPerFrame * root.videoLen
+                                videoLen: root.videoLen
+
+                                onLeftMouseClicked: function (mouseX) {
+                                    // Update the frame
+                                    var targetFrame = Math.round(
+                                                (x + mouseX - timeSlider.width
+                                                 / 2) / root.pixelsPerFrame)
+                                    videoController.jump_to_frame(targetFrame)
+                                }
                             }
                         }
 
                         // Zoom tracks
-                        Repeater {
-                            model: zoomTrackModel
-                            property int zoomTrackStartX: 0
+                        Item {
+                            width: parent.width
+                            height: 60
+                            y: 150
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
 
-                            delegate: ZoomTrack {
-                                width: model.width
-                                height: 60
-                                x: model.x
-                                y: 150
+                            Repeater {
+                                model: zoomTrackModel
+                                property int zoomTrackStartX: 0
 
-                                onPositionChanged: newX => {
-                                                       zoomTrackModel.updateX(
-                                                           index, x)
-                                                   }
-                                onWidthChanged: newWidth => {
-                                                    zoomTrackModel.updateWidth(
-                                                        index, newWidth)
-                                                }
+                                delegate: ZoomTrack {
+                                    width: model.width
+                                    height: 60
+                                    x: model.x
+                                    y: 0
 
-                                onLeftMouseClicked: function (mouseX) {
-                                    timeSlider.x = x + mouseX - timeSlider.width / 2
-                                    timeSlider.visible = true
-                                    timeIndicator.visible = false
+                                    onPositionChanged: newX => {
+                                                           var newStartFrame = Math.round(
+                                                               newX / root.pixelsPerFrame)
+
+                                                           zoomTrackModel.updateX(
+                                                               index, newX,
+                                                               newStartFrame)
+                                                       }
+                                    onWidthChanged: newWidth => {
+                                                        zoomTrackModel.updateWidth(
+                                                            index, newWidth)
+                                                    }
+
+                                    onLeftMouseClicked: function (mouseX) {
+                                        var targetFrame = Math.round(
+                                                    (x + mouseX - timeSlider.width
+                                                     / 2) / root.pixelsPerFrame)
+                                        videoController.jump_to_frame(
+                                                    targetFrame)
+                                    }
                                 }
                             }
                         }
@@ -494,12 +541,12 @@ ApplicationWindow {
                         TimeSlider {
                             id: timeSlider
                             x: 0
-                            y: 0
+                            y: -10
 
                             Connections {
                                 target: videoController
-                                function onCurrentFrameChanged(current_frame) {
-                                    timeSlider.x = current_frame * root.pixelsPerFrame
+                                function onCurrentFrameChanged(currentFrame) {
+                                    timeSlider.x = currentFrame * root.pixelsPerFrame
                                 }
                             }
                         }
@@ -532,9 +579,14 @@ ApplicationWindow {
                                     hoverZoomTrack.visible = false
                                     timeIndicator.visible = false
 
+                                    var startFrame = Math.round(
+                                                (x + clickX) / root.pixelsPerFrame)
+                                    var trackLen = 1.5
+
                                     zoomTrackModel.addZoomTrack(
                                                 x + clickX,
-                                                hoverZoomTrack.width)
+                                                hoverZoomTrack.width,
+                                                startFrame, trackLen)
                                 }
                             }
                         }
@@ -553,7 +605,7 @@ ApplicationWindow {
                             id: hoverZoomTrack
                             x: 0
                             y: 150
-                            width: 200
+                            width: 1.5 * root.fps * root.pixelsPerFrame
                             height: 60
                             visible: false
                         }
@@ -562,7 +614,7 @@ ApplicationWindow {
                         TimeSlider {
                             id: timeIndicator
                             x: 0
-                            y: 0
+                            y: -10
                             color: "#22242F"
                             visible: false
                         }
@@ -574,9 +626,10 @@ ApplicationWindow {
 
     Component.onCompleted: {
         videoController.load_video(
-                    '/home/tamnv/Downloads/upwork-contract-exporter.mp4')
+                    '/home/tamnv/Downloads/VID-20240711-WA0072.mp4')
         fps = videoController.fps
         totalFrames = videoController.total_frames
         videoLen = videoController.video_len
+        zoomTrackModel.maximumX = totalFrames * pixelsPerFrame
     }
 }

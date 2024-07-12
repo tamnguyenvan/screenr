@@ -250,7 +250,7 @@ class Zoom(BaseTransform):
 
         self.click_data = click_data
         self.move_data = None
-        self.clicked_indices = [click['frame_index'] for click in click_data]
+        self.clicked_indices = [click['start_frame'] for click in click_data]
         self.zoom_in_duration = zoom_in_duration
         self.zoom_out_duration = zoom_out_duration
         self.zoom_factor = zoom_factor
@@ -297,13 +297,13 @@ class Zoom(BaseTransform):
         video_height = kwargs['video_height']
         frame_width = kwargs['frame_width']
         frame_height = kwargs['frame_height']
-        frame_index = kwargs['frame_index']
+        start_frame = kwargs['start_frame']
 
         shift_x = 0
         shift_y = 0
 
         # Find the largest less equal click frame index than the current index
-        index = find_largest_leq_sorted(self.clicked_indices, frame_index)
+        index = find_largest_leq_sorted(self.clicked_indices, start_frame)
 
         if index >= 0:
             click = self.click_data[index]
@@ -311,13 +311,13 @@ class Zoom(BaseTransform):
             # If the current frame is within the valid range of the click
             rel_clicked_x = click['x']
             rel_clicked_y = click['y']
-            clicked_frame_index = click['frame_index']
-            duration = click['duration']
+            clicked_start_frame = click['start_frame']
+            duration = click['track_len']
             duration_in_frames = int(duration * self.fps)
 
-            if clicked_frame_index <= frame_index < clicked_frame_index + duration_in_frames:
+            if clicked_start_frame <= start_frame < clicked_start_frame + duration_in_frames:
                 # Calculate the elapsed time and the stage of zoom
-                elapsed_time = (frame_index - clicked_frame_index) / self.fps
+                elapsed_time = (start_frame - clicked_start_frame) / self.fps
                 if elapsed_time <= self.zoom_in_duration:
                     # Zooming in
                     progress = elapsed_time / self.zoom_in_duration
@@ -506,10 +506,10 @@ class Cursor(BaseTransform):
 
     def __call__(self, **kwargs):
         input = kwargs['input']
-        frame_index = kwargs['frame_index']
+        start_frame = kwargs['start_frame']
 
-        if frame_index < len(self.move_data):
-            relative_mouse_x, relative_mouse_y, _ = self.move_data[frame_index]
+        if start_frame < len(self.move_data):
+            relative_mouse_x, relative_mouse_y, _ = self.move_data[start_frame]
             kwargs['input'] = self._blend(input, relative_mouse_x, relative_mouse_y)
 
         return kwargs

@@ -11,8 +11,8 @@ Rectangle {
 
     signal positionChanged(real x)
     signal leftMouseClicked(real clickX)
-    signal rightMouseClicked(real clickX)
 
+    // signal rightMouseClicked(real clickX)
     property int resizeHandleWidth: 10
     property bool resizing: false
     property real videoLen: 0
@@ -67,16 +67,15 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        property int dragStartX: 0
+        // property int dragStartX: 0
         acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-        drag {
-            target: parent
-            axis: Drag.XAxis
-            smoothed: true
-            minimumX: 0
-        }
-
+        // drag {
+        //     target: parent
+        //     axis: Drag.XAxis
+        //     smoothed: true
+        //     minimumX: 0
+        // }
         onReleased: {
             clipTrack.positionChanged(clipTrack.x)
         }
