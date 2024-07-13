@@ -1,624 +1,192 @@
-import QtQuick 2.15
+import QtQuick
+import QtQuick.Controls 2.5
 import QtQuick.Window 2.15
-import QtQuick.Layouts 1.15
-import QtQuick.Controls 2.15
-import QtQuick.Controls.Material 2.15
+import QtQuick.Layouts
+import QtQuick.Effects
 
-ApplicationWindow {
-    id: root
-    width: 1280
-    height: 800
+Window {
+    id: startupWindow
     visible: true
-    title: qsTr("ScreenR")
+    width: Screen.desktopAvailableWidth
+    height: Screen.desktopAvailableHeight
+    visibility: Window.FullScreen
 
-    visibility: Window.Maximized
+    flags: Qt.FramelessWindowHint
+    color: "transparent"
 
-    Material.theme: Material.Dark
-    Material.accent: Material.LightBlue
+    property string selectedMode: "screen"
+    property bool showCountdownFlag: false
 
-    property bool isPlaying: false
-    property int fps: 30
-    property int totalFrames: 0
-    property int pixelsPerFrame: 6
-    property real videoLen: 0
-
-    Connections {
-        target: videoController
-        function onPlayingChanged(playing) {
-            isPlaying = playing
-        }
-    }
-
-    Rectangle {
+    Item {
+        id: homeItem
         anchors.fill: parent
-        color: "#0B0D0F"
+        focus: true
 
-        ColumnLayout {
+        Rectangle {
+            id: background
             anchors.fill: parent
-            anchors.margins: 10
-            spacing: 0
+            opacity: 0.0
+        }
 
-            // Top bar
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.maximumHeight: 50
+        // Border in screen mode
+        Rectangle {
+            id: border
+            anchors.fill: parent
+            border.width: 2
+            border.color: "white"
+            color: "transparent"
+            visible: startupWindow.selectedMode == "screen"
+        }
 
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                }
+        // Area selector for custom mode
+        CustomSelector {
+            id: customSelector
+            x: (parent.width - width) / 2
+            y: (parent.height - height) / 2
+        }
 
-                CustomButton {
-                    text: "Export"
-                    iconSource: "/home/tamnv/Projects/exp/screenr/resources/icons/export.svg"
-                    iconSize: 20
-                    primaryColor: "#4329F4"
-                }
-            }
+        Item {
+            id: layout
+            width: homeWidth + closeButtonSize / 2
+            height: homeHeight + closeButtonSize / 2
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 80
+            anchors.horizontalCenter: parent.horizontalCenter
 
-            // Main content
-            RowLayout {
-                id: mainContent
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+            readonly property int homeWidth: 326
+            readonly property int homeHeight: 174
+            readonly property int closeButtonSize: 38
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    // Video preview label (placeholder for now)
-                    Image {
-                        id: videoPreview
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        fillMode: Image.PreserveAspectFit
-
-                        onStatusChanged: {
-                            if (status === Image.Error) {
-                                console.error("Error loading image:", source)
-                            }
-                        }
-
-                        Connections {
-                            target: videoController
-                            function onFrameReady(frame) {
-                                videoPreview.source = "image://frames/frame?" + Date.now()
-                            }
-                        }
-                    }
-
-                    // Controll buttons
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.maximumHeight: 50
-                        Layout.alignment: Qt.AlignHCenter
-
-                        RowLayout {
-                            CustomButton {
-                                iconSource: "/home/tamnv/Projects/exp/screenr/resources/icons/prev.svg"
-                                primaryColor: "transparent"
-                                hoverColor: "#212121"
-                                onClicked: videoController.prev_frame()
-                            }
-
-                            CustomButton {
-                                iconSource: isPlaying ? "/home/tamnv/Projects/exp/screenr/resources/icons/pause.svg" : "/home/tamnv/Projects/exp/screenr/resources/icons/play.svg"
-                                primaryColor: "transparent"
-                                hoverColor: "#212121"
-                                onClicked: videoController.toggle_play_pause()
-                            }
-
-                            CustomButton {
-                                iconSource: "/home/tamnv/Projects/exp/screenr/resources/icons/next.svg"
-                                primaryColor: "transparent"
-                                hoverColor: "#212121"
-                                onClicked: videoController.next_frame()
-                            }
-                        }
-
-                        RowLayout {
-                            CustomButton {
-                                iconSource: "/home/tamnv/Projects/exp/screenr/resources/icons/cut.svg"
-                                primaryColor: "transparent"
-                                hoverColor: "#212121"
-                            }
-
-                            CustomButton {
-                                iconSource: "/home/tamnv/Projects/exp/screenr/resources/icons/scale.svg"
-                                primaryColor: "transparent"
-                                hoverColor: "#212121"
-                            }
-                        }
-                    }
-                }
-
-                // SideBar
-                ColumnLayout {
-                    Layout.preferredWidth: 450
-                    Layout.minimumWidth: 450
-                    Layout.fillHeight: true
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-
-                        radius: 20
-                        color: "#131519"
-
-                        Flickable {
-                            anchors.fill: parent
-
-                            contentWidth: parent.width
-                            contentHeight: 1000
-                            boundsMovement: Flickable.StopAtBounds
-                            boundsBehavior: Flickable.DragOverBounds
-                            clip: true
-
-                            Column {
-                                anchors.fill: parent
-                                anchors.leftMargin: 20
-                                anchors.rightMargin: 20
-                                anchors.topMargin: 30
-                                anchors.bottomMargin: 30
-                                spacing: 40
-
-                                // Background settings
-                                ColumnLayout {
-                                    width: parent.width
-                                    spacing: 10
-
-                                    Row {
-                                        spacing: 8
-                                        Image {
-                                            // anchors.bottom: parent.bottom
-                                            source: "/home/tamnv/Projects/exp/screenr/resources/icons/background.svg"
-                                            sourceSize.width: 24
-                                            sourceSize.height: 24
-                                            Layout.alignment: Qt.AlignVCenter
-                                            visible: true
-                                        }
-                                        Label {
-                                            text: qsTr("Background")
-                                            font.pixelSize: 16
-                                            anchors.bottom: parent.bottom
-                                        }
-                                    }
-
-                                    TabBar {
-                                        id: backgroundSettingsBar
-                                        width: parent.width
-
-                                        Repeater {
-                                            model: ["Wallpaper", "Gradient", "Color", "Image"]
-
-                                            TabButton {
-                                                text: modelData
-                                                width: implicitWidth
-                                            }
-                                        }
-                                    }
-
-                                    StackLayout {
-                                        width: parent.width
-                                        currentIndex: backgroundSettingsBar.currentIndex
-
-                                        WallpaperPage {
-                                            id: wallpaperPage
-                                        }
-
-                                        GradientPage {
-                                            id: gradientPage
-                                        }
-
-                                        ColorPage {
-                                            id: colorPage
-                                        }
-
-                                        ImagePage {
-                                            id: imagePage
-                                        }
-                                    }
-                                }
-
-                                // Shape settings
-                                ColumnLayout {
-                                    spacing: 20
-
-                                    Label {
-                                        text: qsTr("Shape")
-                                        color: "#c2c2c2"
-                                    }
-                                    ColumnLayout {
-                                        spacing: 50
-
-                                        // Padding
-                                        ColumnLayout {
-                                            width: parent.width
-
-                                            Row {
-                                                spacing: 8
-                                                Image {
-                                                    // anchors.bottom: parent.bottom
-                                                    source: "/home/tamnv/Projects/exp/screenr/resources/icons/padding.svg"
-                                                    sourceSize.width: 24
-                                                    sourceSize.height: 24
-                                                    Layout.alignment: Qt.AlignVCenter
-                                                    visible: true
-                                                }
-                                                Label {
-                                                    text: qsTr("Padding")
-                                                    font.pixelSize: 16
-                                                    anchors.bottom: parent.bottom
-                                                }
-                                            }
-
-                                            RowLayout {
-                                                Layout.fillWidth: true
-                                                Layout.fillHeight: true
-
-                                                Slider {
-                                                    id: paddingSlider
-                                                    from: 0
-                                                    value: 100
-                                                    to: 500
-                                                    Layout.preferredWidth: 380
-
-                                                    onValueChanged: {
-                                                        paddingLabel.updateText(
-                                                                    value)
-                                                        videoController.padding = Math.round(
-                                                                    value)
-                                                        if (!isPlaying) {
-                                                            videoController.get_current_frame()
-                                                        }
-                                                    }
-                                                }
-
-                                                Label {
-                                                    id: paddingLabel
-                                                    text: "100"
-                                                    function updateText(value) {
-                                                        text = value.toFixed(0)
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        // Inset
-                                        ColumnLayout {
-                                            width: parent.width
-
-                                            Row {
-                                                spacing: 8
-                                                Image {
-                                                    // anchors.bottom: parent.bottom
-                                                    source: "/home/tamnv/Projects/exp/screenr/resources/icons/padding.svg"
-                                                    sourceSize.width: 24
-                                                    sourceSize.height: 24
-                                                    Layout.alignment: Qt.AlignVCenter
-                                                    visible: true
-                                                }
-                                                Label {
-                                                    text: qsTr("Inset")
-                                                    font.pixelSize: 16
-                                                    anchors.bottom: parent.bottom
-                                                }
-                                            }
-
-                                            RowLayout {
-                                                Layout.fillWidth: true
-                                                Layout.fillHeight: true
-
-                                                Slider {
-                                                    id: insetSlider
-                                                    from: 0
-                                                    value: 100
-                                                    to: 500
-                                                    Layout.preferredWidth: 380
-                                                }
-
-                                                Label {
-                                                    text: qsTr("%1").arg(
-                                                              Math.round(
-                                                                  insetSlider.value))
-                                                }
-                                            }
-                                        }
-
-                                        // Roundness
-                                        ColumnLayout {
-                                            width: parent.width
-
-                                            Row {
-                                                spacing: 8
-                                                Image {
-                                                    // anchors.bottom: parent.bottom
-                                                    source: "/home/tamnv/Projects/exp/screenr/resources/icons/border.svg"
-                                                    sourceSize.width: 24
-                                                    sourceSize.height: 24
-                                                    Layout.alignment: Qt.AlignVCenter
-                                                    visible: true
-                                                }
-                                                Label {
-                                                    text: qsTr("Roundness")
-                                                    font.pixelSize: 16
-                                                    anchors.bottom: parent.bottom
-                                                }
-                                            }
-
-                                            RowLayout {
-                                                Layout.fillWidth: true
-                                                Layout.fillHeight: true
-
-                                                Slider {
-                                                    id: roundnessSlider
-                                                    from: 0
-                                                    value: 20
-                                                    to: 100
-                                                    Layout.preferredWidth: 380
-
-                                                    onValueChanged: {
-                                                        roundnessLabel.updateText(
-                                                                    value)
-                                                        videoController.border_radius = Math.round(
-                                                                    value)
-                                                        if (!isPlaying) {
-                                                            videoController.get_current_frame()
-                                                        }
-                                                    }
-                                                }
-
-                                                Label {
-                                                    id: roundnessLabel
-                                                    text: "20"
-
-                                                    function updateText(value) {
-                                                        text = value.toFixed(0)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Video edit
+            // Home
             Rectangle {
-                id: videoEdit
-                Layout.fillWidth: true
-                Layout.preferredHeight: 230
-                color: "transparent"
-                radius: 4
+                id: home
+                width: 326
+                height: 174
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
 
-                Flickable {
+                color: "#1c1c1c"
+                radius: 30
+                border.width: 1
+                border.color: "#464646"
+
+                Row {
+                    anchors.top: parent.top
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.topMargin: 18
+                    spacing: 8
+
+                    ModeButton {
+                        id: customButton
+                        text: "Custom"
+                        iconPath: "/home/tamnv/Projects/exp/screenr/resources/icons/custom.svg"
+                        onClicked: {
+                            customButton.activated = true
+                            screenButton.activated = false
+                            windowButton.activated = false
+                            startupWindow.selectedMode = "custom"
+                        }
+                    }
+
+                    ModeButton {
+                        id: screenButton
+                        text: "Screen"
+                        iconPath: "/home/tamnv/Projects/exp/screenr/resources/icons/screen.svg"
+                        activated: true
+                        onClicked: {
+                            customButton.activated = false
+                            screenButton.activated = true
+                            windowButton.activated = false
+                            startupWindow.selectedMode = "screen"
+                        }
+                    }
+
+                    ModeButton {
+                        id: windowButton
+                        text: "Window"
+                        iconPath: "/home/tamnv/Projects/exp/screenr/resources/icons/window.svg"
+                        onClicked: {
+                            customButton.activated = false
+                            screenButton.activated = false
+                            windowButton.activated = true
+                            startupWindow.selectedMode = "window"
+                        }
+                    }
+                }
+
+                Row {
+                    anchors.bottom: parent.bottom
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottomMargin: 10
+
+                    RecordButton {
+                        id: recordButton
+                        onClicked: {
+                            countdownLoader.source = ""
+                            countdownLoader.source
+                                    = "/home/tamnv/Projects/exp/screenr/Countdown.qml"
+                            startupWindow.hide()
+                        }
+                    }
+                }
+            }
+
+            // Close button
+            Item {
+                anchors.top: parent.top
+                anchors.left: parent.left
+                width: layout.closeButtonSize
+                height: layout.closeButtonSize
+                z: 1
+
+                Button {
+                    id: closeButton
                     anchors.fill: parent
 
-                    contentWidth: root.fps * root.videoLen * root.pixelsPerFrame + 200
-                    contentHeight: parent.height
-                    boundsMovement: Flickable.StopAtBounds
-                    boundsBehavior: Flickable.DragOverBounds
+                    background: Rectangle {
+                        anchors.fill: parent
+                        radius: layout.closeButtonSize / 2
+                        color: closeButton.hovered ? Qt.lighter("#393939",
+                                                                1.2) : "#393939"
+                        border.width: 1
+                        border.color: "#404040"
+                    }
 
-                    // Container
-                    Item {
-                        width: parent.contentWidth
-                        height: videoEdit.height
-                        anchors.left: parent.left
-                        anchors.leftMargin: 20
-
-                        // Timeline
-                        Repeater {
-                            model: Math.ceil(root.videoLen) + 1
-
-                            Rectangle {
-                                width: root.fps * root.pixelsPerFrame
-                                height: 60
-                                x: root.fps * root.pixelsPerFrame * index
-                                y: 0
-                                color: "transparent"
-
-                                Item {
-                                    width: 20
-                                    height: parent.height
-
-                                    ColumnLayout {
-                                        anchors.fill: parent
-                                        spacing: 10
-
-                                        Item {
-                                            Layout.fillHeight: true
-                                            Layout.fillWidth: true
-                                        }
-
-                                        Label {
-                                            Layout.alignment: Qt.AlignCenter
-                                            text: qsTr("" + index)
-                                        }
-
-                                        Item {
-                                            Layout.alignment: Qt.AlignCenter
-
-                                            Rectangle {
-                                                width: 4
-                                                height: 4
-                                                radius: 2
-                                                color: "white"
-                                                anchors.centerIn: parent
-                                            }
-                                        }
-
-                                        Item {
-                                            Layout.fillHeight: true
-                                            Layout.fillWidth: true
-                                        }
-                                    }
-                                }
-                            }
+                    contentItem: Item {
+                        anchors.fill: parent
+                        Image {
+                            source: "/home/tamnv/Projects/exp/screenr/resources/icons/close.svg"
+                            anchors.centerIn: parent
+                            width: 24
+                            height: 24
                         }
+                    }
 
-                        // Clip track
-                        Item {
-                            width: parent.width
-                            height: 60
-                            y: 75
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
-
-                            ClipTrack {
-                                x: 0
-                                y: 0
-                                height: 60
-                                width: root.fps * root.pixelsPerFrame * root.videoLen
-                                videoLen: root.videoLen
-
-                                onLeftMouseClicked: function (mouseX) {
-                                    // Update the frame
-                                    var targetFrame = Math.round(
-                                                (x + mouseX - timeSlider.width
-                                                 / 2) / root.pixelsPerFrame)
-                                    videoController.jump_to_frame(targetFrame)
-                                }
-                            }
-                        }
-
-                        // Zoom tracks
-                        Item {
-                            width: parent.width
-                            height: 60
-                            y: 150
-                            anchors.left: parent.left
-                            anchors.leftMargin: 10
-
-                            Repeater {
-                                model: zoomTrackModel
-                                property int zoomTrackStartX: 0
-
-                                delegate: ZoomTrack {
-                                    width: model.width
-                                    height: 60
-                                    x: model.x
-                                    y: 0
-
-                                    onPositionChanged: newX => {
-                                                           var newStartFrame = Math.round(
-                                                               newX / root.pixelsPerFrame)
-
-                                                           zoomTrackModel.updateX(
-                                                               index, newX,
-                                                               newStartFrame)
-                                                       }
-                                    onWidthChanged: newWidth => {
-                                                        zoomTrackModel.updateWidth(
-                                                            index, newWidth)
-                                                    }
-
-                                    onLeftMouseClicked: function (mouseX) {
-                                        var targetFrame = Math.round(
-                                                    (x + mouseX - timeSlider.width
-                                                     / 2) / root.pixelsPerFrame)
-                                        videoController.jump_to_frame(
-                                                    targetFrame)
-                                    }
-                                }
-                            }
-                        }
-
-                        // TimeSlider
-                        TimeSlider {
-                            id: timeSlider
-                            x: 0
-                            y: -10
-
-                            Connections {
-                                target: videoController
-                                function onCurrentFrameChanged(currentFrame) {
-                                    timeSlider.x = currentFrame * root.pixelsPerFrame
-                                }
-                            }
-                        }
-
-                        // NonZoomTrackMouseArea
-                        Repeater {
-                            id: nonZoomTracksRepeater
-                            model: zoomTrackModel ? zoomTrackModel.getGaps(
-                                                        ) : []
-                            delegate: NonZoomTrackMouseArea {
-                                x: modelData.x
-                                y: 150
-                                width: modelData.width
-                                height: 60
-
-                                onMouseEntered: function (mouseX) {
-                                    hoverZoomTrack.x = x + mouseX
-                                    hoverZoomTrack.visible = true
-
-                                    timeIndicator.x = x + mouseX
-                                    timeIndicator.visible = true
-                                }
-
-                                onMouseExited: {
-                                    hoverZoomTrack.visible = false
-                                    timeIndicator.visible = false
-                                }
-
-                                onClicked: function (clickX) {
-                                    hoverZoomTrack.visible = false
-                                    timeIndicator.visible = false
-
-                                    var startFrame = Math.round(
-                                                (x + clickX) / root.pixelsPerFrame)
-                                    var trackLen = 1.5
-
-                                    zoomTrackModel.addZoomTrack(
-                                                x + clickX,
-                                                hoverZoomTrack.width,
-                                                startFrame, trackLen)
-                                }
-                            }
-                        }
-
-                        Connections {
-                            target: zoomTrackModel
-                            function onZoomTracksChanged() {
-                                if (zoomTrackModel) {
-                                    nonZoomTracksRepeater.model = zoomTrackModel.getGaps()
-                                }
-                            }
-                        }
-
-                        // HoverZoomTrack
-                        HoverZoomTrack {
-                            id: hoverZoomTrack
-                            x: 0
-                            y: 150
-                            width: 1.5 * root.fps * root.pixelsPerFrame
-                            height: 60
-                            visible: false
-                        }
-
-                        // Time indicator
-                        TimeSlider {
-                            id: timeIndicator
-                            x: 0
-                            y: -10
-                            color: "#22242F"
-                            visible: false
-                        }
+                    onClicked: {
+                        close()
                     }
                 }
             }
+
+            MultiEffect {
+                source: home
+                anchors.fill: home
+                shadowBlur: 1.0
+                shadowEnabled: true
+                shadowColor: "black"
+                shadowVerticalOffset: 0
+                shadowHorizontalOffset: 0
+            }
         }
+
+        Keys.onPressed: event => {
+                            if (event.key === Qt.Key_Escape) {
+                                close()
+                            }
+                        }
     }
 
-    Component.onCompleted: {
-        videoController.load_video(
-                    '/home/tamnv/Downloads/VID-20240711-WA0072.mp4')
-        fps = videoController.fps
-        totalFrames = videoController.total_frames
-        videoLen = videoController.video_len
-        zoomTrackModel.maximumX = totalFrames * pixelsPerFrame
+    Loader {
+        id: countdownLoader
     }
 }

@@ -9,12 +9,13 @@ Rectangle {
     radius: 10
     color: "#614BF9"
 
-    signal positionChanged(real x)
+    signal positionOrSizeChanged(real x, real width)
     signal leftMouseClicked(real clickX)
     signal rightMouseClicked(real clickX)
 
     property int resizeHandleWidth: 10
     property bool resizing: false
+    readonly property int minWidth: 100
 
     Rectangle {
         width: parent.width - 20
@@ -81,7 +82,7 @@ Rectangle {
         }
 
         onReleased: {
-            zoomTrack.positionChanged(zoomTrack.x)
+            zoomTrack.positionOrSizeChanged(zoomTrack.x, zoomTrack.width)
         }
 
         onClicked: event => {
@@ -94,60 +95,58 @@ Rectangle {
                    }
     }
 
-    MouseArea {
-        id: leftResizeHandle
+    Item {
         width: resizeHandleWidth
         height: parent.height
         anchors.left: parent.left
-        cursorShape: Qt.SizeHorCursor
-        drag {
-            target: parent
-            axis: Drag.XAxis
-        }
-        onPressed: {
-            resizing = true
-        }
-        onReleased: {
-            resizing = false
-            zoomTrack.positionChanged(zoomTrack.x)
-            zoomTrack.widthChanged(zoomTrack.width)
-        }
-        onMouseXChanged: {
-            if (drag.active) {
-                var deltaX = mouseX
-                zoomTrack.x += deltaX
-                zoomTrack.width -= deltaX
-                if (zoomTrack.width < zoomTrack.implicitWidth) {
-                    zoomTrack.width = zoomTrack.implicitWidth
-                    zoomTrack.x = drag.maximumX
+
+        MouseArea {
+            id: leftResizeHandle
+            anchors.fill: parent
+            cursorShape: Qt.SizeHorCursor
+
+            drag {
+                target: parent
+                axis: Drag.XAxis
+            }
+
+            onReleased: {
+                zoomTrack.positionOrSizeChanged(zoomTrack.x, zoomTrack.width)
+            }
+
+            onMouseXChanged: {
+                if (drag.active) {
+                    zoomTrack.width = zoomTrack.width - mouseX
+                    zoomTrack.x = zoomTrack.x + mouseX
+                    if (zoomTrack.width < zoomTrack.minWidth) {
+                        zoomTrack.width = zoomTrack.minWidth
+                    }
                 }
             }
         }
     }
 
-    MouseArea {
-        id: rightResizeHandle
+    Item {
         width: resizeHandleWidth
         height: parent.height
         anchors.right: parent.right
-        cursorShape: Qt.SizeHorCursor
-        drag {
-            target: parent
-            axis: Drag.XAxis
-        }
-        onPressed: {
-            resizing = true
-        }
-        onReleased: {
-            resizing = false
-            zoomTrack.widthChanged(zoomTrack.width)
-        }
-        onMouseXChanged: {
-            if (drag.active) {
-                var deltaX = mouseX
-                zoomTrack.width += deltaX
-                if (zoomTrack.width < zoomTrack.implicitWidth) {
-                    zoomTrack.width = zoomTrack.implicitWidth
+
+        MouseArea {
+            id: rightResizeHandle
+            anchors.fill: parent
+            cursorShape: Qt.SizeHorCursor
+
+            drag {
+                target: parent
+                axis: Drag.XAxis
+            }
+
+            onMouseXChanged: {
+                if (drag.active) {
+                    zoomTrack.width = zoomTrack.width + mouseX
+                    if (zoomTrack.width < zoomTrack.minWidth) {
+                        zoomTrack.width = zoomTrack.minWidth
+                    }
                 }
             }
         }

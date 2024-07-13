@@ -28,7 +28,9 @@ Item {
             }
 
             onReleased: {
-
+                var currentFrame = Math.round(
+                            timeSlider.x / root.pixelsPerFrame)
+                videoController.jump_to_frame(currentFrame)
             }
         }
     }

@@ -3,6 +3,7 @@
         "ClipTrack.qml",
         "ColorPage.qml",
         "CustomButton.qml",
+        "ExportDialog.qml",
         "GradientPage.qml",
         "HoverZoomTrack.qml",
         "ImagePage.qml",
@@ -12,10 +13,16 @@
         "ZoomTrack.qml",
         "image_provider.py",
         "main.py",
-        "main.qml",
+        "Studio.qml",
         "main.qrc",
         "model.py",
         "transforms.py",
-        "utils.py"
+        "utils.py",
+        "main.qml",
+        "RecordButton.qml",
+        "ModeButton.qml",
+        "CustomSelector.qml",
+        "AnchorButton.qml",
+        "Countdown.qml"
     ]
 }

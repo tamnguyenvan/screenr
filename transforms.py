@@ -310,8 +310,8 @@ class Zoom(BaseTransform):
             click = self.click_data[index]
 
             # If the current frame is within the valid range of the click
-            rel_clicked_x = click['x']
-            rel_clicked_y = click['y']
+            rel_clicked_x = click['click_x']
+            rel_clicked_y = click['click_y']
             clicked_start_frame = click['start_frame']
             duration = click['track_len']
             duration_in_frames = int(duration * self.fps)
