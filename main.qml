@@ -206,11 +206,8 @@ ApplicationWindow {
                                             id: wallpaperPage
                                         }
 
-                                        Rectangle {
+                                        GradientPage {
                                             id: gradientPage
-                                            width: parent.width
-                                            height: 50
-                                            color: "red"
                                         }
 
                                         ColorPage {

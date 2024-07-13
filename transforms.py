@@ -6,7 +6,7 @@ from enum import Enum, auto
 import cv2
 import numpy as np
 # from utils.image import ImageAssets
-from utils import hex_to_rgb, find_largest_leq_sorted
+from utils import hex_to_rgb, create_gradient_image, find_largest_leq_sorted
 
 
 class BaseTransform:
@@ -538,7 +538,10 @@ class Background(BaseTransform):
             background_image = cv2.imread(background_path)
             background_image = cv2.resize(background_image, (width, height))
         elif background['type'] == 'gradient':
-            pass
+            value = background['value']
+            first_color, second_color = value['colors']
+            angle = value['angle']
+            background_image = create_gradient_image(width, height, first_color, second_color, angle)
         elif background['type'] == 'color':
             hex_color = background['value']
             r, g, b = hex_to_rgb(hex_color)
@@ -551,7 +554,7 @@ class Background(BaseTransform):
             background_image = cv2.imread(background_path)
             background_image = cv2.resize(background_image, (width, height))
         else:
-            raise Exception()
+            background_image = np.full((height, width, 3), fill_value=0, dtype=np.uint8)
 
         return background_image
 

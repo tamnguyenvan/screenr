@@ -3,6 +3,7 @@
         "ClipTrack.qml",
         "ColorPage.qml",
         "CustomButton.qml",
+        "GradientPage.qml",
         "HoverZoomTrack.qml",
         "ImagePage.qml",
         "NonZoomTrackMouseArea.qml",
