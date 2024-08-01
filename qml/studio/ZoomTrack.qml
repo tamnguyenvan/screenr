@@ -142,7 +142,6 @@ Rectangle {
             }
 
             onReleased: {
-                print('on release', zoomTrack.x, zoomTrack.width)
                 zoomTrack.positionOrSizeChanged(zoomTrack.x, zoomTrack.width)
             }
 

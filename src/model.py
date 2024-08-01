@@ -5,14 +5,14 @@ from threading import Thread, Event
 
 import cv2
 import numpy as np
-
+from mss import mss
 from PySide6.QtCore import (
     QObject, Property, QAbstractListModel,
-    QModelIndex, Qt, Slot, Signal, QThread, QTimer, QUrl
+    QModelIndex, Qt, Slot, Signal, QThread, QTimer
 )
 from PySide6.QtGui import QImage
-from vidgear.gears import ScreenGear
 from pynput.mouse import Listener
+from PIL import Image
 
 import transforms
 from utils import generate_video_path
@@ -254,7 +254,6 @@ class VideoRecordingThread:
         self._fps = 25
         self._maximum_fps = 200
 
-        self._stream = ScreenGear().start()
 
     @property
     def mouse_events(self):
@@ -294,12 +293,17 @@ class VideoRecordingThread:
 
             interval = 1 / self._fps
             self._frame_index = 0
+
+            stream = mss()
+            monitor = {"top": 0, "left": 0, "width": 1920, "height": 1080}
             while not self._is_stopped.is_set():
                 t0 = time.time()
-                frame = self._stream.read()
+                # frame = self._stream.read()
+                frame = np.array(stream.grab(monitor))
                 if frame is None:
                     break
 
+                frame = frame[:, :, :3]
                 frame_height, frame_width = frame.shape[:2]
                 if self._writer is None:
                     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -323,7 +327,7 @@ class VideoRecordingThread:
             if self._writer is not None:
                 self._writer.release()
                 self._writer = None
-            self._stream.stop()
+            # self._stream.stop()
 
     def _mouse_track(self):
         def on_move(x, y):
@@ -415,19 +419,19 @@ class VideoController(QObject):
             'move': [],
             'click': []
         }
+        default_track_len = 1.5
 
         for click in recording_data['click']:
             click_x, click_y, start_frame = click
             x = start_frame * pixels_per_frame
             y = 0
-            track_len = 1
-            width = track_len * self.video_processor.fps * pixels_per_frame
+            width = default_track_len * self.video_processor.fps * pixels_per_frame
             calib_mouse_events['move'].append({
                 'x': x,
                 'y': y,
                 'width': width,
                 'start_frame': start_frame,
-                'track_len': 1,
+                'track_len': default_track_len,
                 'click_x': click_x,
                 'click_y': click_y
             })
@@ -596,7 +600,7 @@ class VideoProcessor(QObject):
         self.frame_width = int(self.video.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.frame_height = int(self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.total_frames = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
-        self.video_len = self.total_frames / self.fps
+        self.video_len = self.total_frames / self.fps if self.fps > 0 else 0
         self.current_frame = 0
 
         background = {'type': 'wallpaper', 'value': 1}

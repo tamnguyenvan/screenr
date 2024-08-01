@@ -162,7 +162,7 @@ ApplicationWindow {
                             anchors.fill: parent
 
                             contentWidth: parent.width
-                            contentHeight: 1000
+                            contentHeight: 800
                             clip: true
 
                             Column {
