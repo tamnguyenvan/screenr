@@ -1,3 +1,23 @@
 <RCC>
-    <qresource prefix="/"/>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/components/AnchorButton.qml</file>
+        <file>qml/components/CustomButton.qml</file>
+        <file>qml/components/CustomSelector.qml</file>
+        <file>qml/components/ModeButton.qml</file>
+        <file>qml/components/RecordButton.qml</file>
+        <file>qml/components/TimeSlider.qml</file>
+        <file>qml/dialogs/BrowseDialog.qml</file>
+        <file>qml/dialogs/ExportDialog.qml</file>
+        <file>qml/pages/ColorPage.qml</file>
+        <file>qml/pages/GradientPage.qml</file>
+        <file>qml/pages/ImagePage.qml</file>
+        <file>qml/pages/WallpaperPage.qml</file>
+        <file>qml/recording/Countdown.qml</file>
+        <file>qml/studio/Studio.qml</file>
+        <file>qml/studio/ClipTrack.qml</file>
+        <file>qml/studio/HoverZoomTrack.qml</file>
+        <file>qml/studio/NonZoomTrackMouseArea.qml</file>
+        <file>qml/studio/ZoomTrack.qml</file>
+    </qresource>
 </RCC>
