@@ -18,8 +18,7 @@ ApplicationWindow {
     visibility: Window.Maximized
 
     Material.theme: Material.Dark
-    Material.accent: Material.Indigo
-
+    Material.accent: "#4329F4"
     property bool isPlaying: false
     property int fps: 30
     property int totalFrames: 0
@@ -158,11 +157,13 @@ ApplicationWindow {
                         radius: 20
                         color: "#131519"
 
-                        ScrollView {
+                        Flickable {
                             anchors.fill: parent
 
                             contentWidth: parent.width
                             contentHeight: 800
+                            boundsMovement: Flickable.StopAtBounds
+                            boundsBehavior: Flickable.StopAtBounds
                             clip: true
 
                             Column {
@@ -196,14 +197,14 @@ ApplicationWindow {
 
                                     TabBar {
                                         id: backgroundSettingsBar
-                                        width: parent.width
+                                        Layout.fillWidth: true
 
                                         Repeater {
                                             model: ["Wallpaper", "Gradient", "Color", "Image"]
 
                                             TabButton {
                                                 text: modelData
-                                                width: implicitWidth
+                                                Layout.fillWidth: true
                                             }
                                         }
                                     }
