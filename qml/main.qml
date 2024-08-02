@@ -167,19 +167,6 @@ Window {
                                     videoController.load_video(videoPath,
                                                                mouseEvents)
 
-                                    // var component = Qt.createComponent(
-                                    //             "qrc:/qml/studio/Studio.qml")
-                                    // if (component.status === Component.Ready) {
-                                    //     var studioWindow = component.createObject(
-                                    //                 null)
-
-                                    //     if (studioWindow === null) {
-                                    //         console.log("Error creating object")
-                                    //     }
-                                    // } else {
-                                    //     console.log("Error loading component:",
-                                    //                 component.errorString())
-                                    // }
                                     studioLoader.source = ""
                                     studioLoader.source = "qrc:/qml/studio/Studio.qml"
 
@@ -209,11 +196,16 @@ Window {
                 }
 
                 contentItem: Image {
-                    source: "qrc:/resources/icons/close.svg"
                     anchors.centerIn: parent
-                    sourceSize.height: 16
-                    sourceSize.width: 16
+                    source: "qrc:/resources/icons/close.svg"
+                    width: 24
+                    height: 24
                 }
+                // contentItem: Rectangle {
+                //     anchors.fill: parent
+                //     radius: width / 2
+                //     color: "red"
+                // }
 
                 onClicked: close()
             }

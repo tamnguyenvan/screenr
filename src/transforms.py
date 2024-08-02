@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import platform
 from pathlib import Path
@@ -528,7 +529,13 @@ class Background(BaseTransform):
     def __init__(self, background):
         super().__init__()
 
-        self.background_dir = Path(__file__).parents[1] / "resources/images/wallpaper/hires"
+        if getattr(sys, 'frozen', False):
+            # Run from executable
+            base_path = Path(sys._MEIPASS)
+        else:
+            # Run from source
+            base_path = Path(__file__).parents[1]
+        self.background_dir = os.path.join(base_path, "resources/images/wallpaper/hires")
         self.background = background
         self.background_image = None
 

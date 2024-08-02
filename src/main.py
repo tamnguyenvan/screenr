@@ -1,8 +1,7 @@
-# This Python file uses the following encoding: utf-8
 import sys
 from pathlib import Path
 
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QIcon
 from PySide6.QtQml import QQmlApplicationEngine
 
 import rc_main
@@ -14,6 +13,14 @@ from image_provider import FrameImageProvider
 
 if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
+
+    if getattr(sys, 'frozen', False):
+        # Run from executable
+        base_path = Path(sys._MEIPASS)
+    else:
+        # Run from source
+        base_path = Path(__file__).parents[1]
+    app.setWindowIcon(QIcon("resources/icons/screenr.ico"))
     engine = QQmlApplicationEngine()
 
     # Image provider

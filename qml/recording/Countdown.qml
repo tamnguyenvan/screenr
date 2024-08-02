@@ -52,7 +52,7 @@ Window {
     SystemTrayIcon {
         id: tray
         visible: false
-        icon.source: "qrc:/resources/icons/custom.svg"
+        icon.source: "qrc:/resources/icons/screenr.ico"
         menu: Menu {
             MenuItem {
                 text: qsTr("Stop")
